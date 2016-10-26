@@ -4,26 +4,29 @@
 //
 // Author: Kai Zhang (cs.zhangkai@outlook.com)
 
-#ifndef BAIDU_ORION_STORAGE_DATA_STORE_H
-#define BAIDU_ORION_STORAGE_DATA_STORE_H
+#ifndef ORION_STORAGE_DATA_STORE_H
+#define ORION_STORAGE_DATA_STORE_H
 #include <string>
 #include <map>
 #include <memory>
+#include <mutex>
 
 namespace orion {
 namespace storage {
 
+/// iterator over underlying storage
 class DataIterator {
 public:
     virtual std::string key() const = 0;
     virtual std::string value() const = 0;
     virtual bool done() const = 0;
-    virtual bool seek(const std::string& key) = 0;
-    virtual std::string next() = 0;
+    virtual DataIterator* seek(const std::string& key) = 0;
+    virtual DataIterator* next() = 0;
 
     virtual ~DataIterator() { }
 };
 
+/// interface over underlying storage, provide namespace and kv i/o
 class DataStore {
 public:
     virtual int32_t get(std::string& value, const std::string& ns,
@@ -36,15 +39,16 @@ public:
     virtual ~DataStore() { }
 };
 
+/// create data store as singleton
 class DataStoreFactory {
 public:
-    static DataStore* get(const std::string&);
+    static DataStore* get();
 private:
-    std::map< std::string, std::shared_ptr<DataStore> > _map;
+    static std::unique_ptr<DataStore> _store;
 };
 
-}
-}
+} // namespace storage
+} // namespace orion
 
-#endif
+#endif // ORION_STORAGE_DATA_STORE_H
 
