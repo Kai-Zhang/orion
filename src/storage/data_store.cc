@@ -9,6 +9,7 @@
 #include <mutex>
 #include "leveldb/db.h"
 #include "common/logging.h"
+#include "common/const.h"
 
 namespace orion {
 namespace storage {
@@ -17,7 +18,7 @@ class DataIteratorImpl : public DataIterator {
 public:
     DataIteratorImpl(leveldb::Iterator* it, const std::string& ns) :
             _it(it), _ns(ns) { }
-    virtual ~DataIterator() {
+    virtual ~DataIteratorImpl() {
         if (_it != NULL) {
             delete _it;
             _it = NULL;
@@ -43,7 +44,7 @@ public:
         return this;
     }
 
-    virtual DataIterator* std::string next() {
+    virtual DataIterator* next() {
         if (_it != NULL) {
             _it->Next();
         }
@@ -55,12 +56,12 @@ private:
     //   /ns/key -> value
     // for default ns, the ns should be empty:
     //   //key -> value
-    std::string remove_ns(const std::string& raw_str) {
+    std::string remove_ns(const std::string& raw_str) const {
         // ignore the first /
         size_t ns_sep = raw_str.find_first_of("/", 1);
         return ns_sep == std::string::npos ? raw_str : raw_str.substr(ns_sep + 1);
     }
-    std::string get_key_in_ns(const std::string& ns, const std::string& key) {
+    std::string get_key_in_ns(const std::string& ns, const std::string& key) const {
         return std::string("/") + ns + "/" + key;
     }
 private:
@@ -77,27 +78,28 @@ public:
             const std::string& key) const {
         leveldb::Status st = _db->Get(leveldb::ReadOptions(),
                 get_key_in_ns(ns, key), &value);
-        return st.ok() ? status::OK : (
-                st.IsNotFound() ? status::NOT_FOUND : status::DATABASE_ERROR);
+        return st.ok() ? status_code::OK : (
+                         st.IsNotFound() ? status_code::NOT_FOUND :
+                                           status_code::DATABASE_ERROR);
     }
 
     virtual int32_t put(const std::string& ns, const std::string& key,
             const std::string& value) {
         leveldb::Status st = _db->Put(leveldb::WriteOptions(),
                 get_key_in_ns(ns, key), value);
-        return st.ok() ? status::OK : status::DATABASE_ERROR;
+        return st.ok() ? status_code::OK : status_code::DATABASE_ERROR;
     }
 
     virtual int32_t remove(const std::string& ns, const std::string& key) {
         leveldb::Status st = _db->Delete(leveldb::WriteOptions(), get_key_in_ns(ns, key));
-        return st.ok() ? status::OK : status::DATABASE_ERROR;
+        return st.ok() ? status_code::OK : status_code::DATABASE_ERROR;
     }
 
     virtual DataIterator* iter(const std::string& ns) const {
         return new DataIteratorImpl(_db->NewIterator(leveldb::ReadOptions()), ns);
     }
 private:
-    std::string get_key_in_ns(const std::string& ns, const std::string& key) {
+    std::string get_key_in_ns(const std::string& ns, const std::string& key) const {
         return std::string("/") + ns + "/" + key;
     }
 private:
@@ -107,22 +109,23 @@ private:
 
 DataStore* DataStoreFactory::get() {
     if (_store != nullptr) {
-        return _store;
+        return _store.get();
     }
     // TODO use proper dir path
-    std::string full_name = id;//data_dir_ + "/" + name + "@db";
+    std::string full_name = "";//data_dir_ + "/" + name + "@db";
     leveldb::Options options;
     options.create_if_missing = true;
     // TODO compression enable?
     options.compression = leveldb::kSnappyCompression;
-    options.write_buffer_size = FLAGS_ins_data_write_buffer_size * 1024 * 1024;
-    options.block_size = FLAGS_ins_data_block_size * 1024;
+    // TODO specify size?
+    options.write_buffer_size = 0;//FLAGS_ins_data_write_buffer_size * 1024 * 1024;
+    options.block_size = 0;//FLAGS_ins_data_block_size * 1024;
     LOG(INFO, "[data]: block_size: %d, writer_buffer_size: %d", 
         options.block_size,
         options.write_buffer_size);
     leveldb::DB* current_db = NULL;
-    leveldb::Status status = leveldb::DB::Open(options, full_name, &current_db);
-    if (!status.ok() || current_db == nullptr) {
+    leveldb::Status st = leveldb::DB::Open(options, full_name, &current_db);
+    if (!st.ok() || current_db == nullptr) {
         // TODO maybe abort here?
         return nullptr;
     }

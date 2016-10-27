@@ -4,19 +4,20 @@
 //
 // Author: Kai Zhang (cs.zhangkai@outlook.com)
 
-#ifndef BAIDU_ORION_COMMON_CONST_H
-#define BAIDU_ORION_COMMON_CONST_H
+#ifndef ORION_COMMON_CONST_H
+#define ORION_COMMON_CONST_H
 #include <stdint.h>
 
 namespace orion {
-namespace status {
+namespace status_code {
 
 static const int32_t OK = 0;
 static const int32_t DATABASE_ERROR = 1;
 static const int32_t NOT_FOUND = 2;
+static const int32_t INVALID = 3;
 
-}
-}
+} // namespace status_code
+} // namespace orion
 
-#endif
+#endif // ORION_COMMON_CONST_H
 
