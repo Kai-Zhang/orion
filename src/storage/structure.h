@@ -31,12 +31,13 @@ public:
 
 class BasicStructure {
 public:
-    virtual int32_t build(const std::string& ns, const std::string& key) = 0;
-
-    virtual int32_t get(ValueInfo& info) const = 0;
-    virtual int32_t put(const ValueInfo& info) = 0;
-    virtual int32_t remove() = 0;
-    virtual StructureIterator* list() const = 0;
+    virtual int32_t get(ValueInfo& info, const std::string& ns,
+            const std::string& key) const = 0;
+    virtual int32_t put(const std::string& ns, const std::string& key,
+            const ValueInfo& info) = 0;
+    virtual int32_t remove(const std::string& ns, const std::string& key) = 0;
+    virtual StructureIterator* list(const std::string& ns,
+            const std::string& key) const = 0;
 
     virtual ~BasicStructure() { }
 };

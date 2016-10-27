@@ -62,31 +62,34 @@ private:
         if (!data.ParseFromString(raw)) {
             return false;
         }
-        info.temp = data.type() == proto::NODE_TEMP;
-        info.value = data.value();
-        info.owner = data.owner();
+        info = { data.type() == proto::NODE_TEMP, data.value(), data.owner() };
         return true;
     }
 private:
+    static const std::string user_prefix("/user/");
+
     std::unique_ptr<DataIterator> _it;
     std::string _key;
     ValueInfo _value;
 };
 
-TreeStructure::TreeStructure() {
-    _underlying = DataStoreFactory::get();
-}
-
-int32_t TreeStructure::get(ValueInfo& info) const {
+int32_t TreeStructure::get(ValueInfo& info, const std::string& ns,
+        const std::string& key) const {
     std::string raw_value;
-    int32_t ret = _underlying->get(raw_value, _ns, get_structured_key(_key));
+    int32_t ret = _underlying->get(raw_value, ns, get_structured_key(key));
     if (ret != status_code::OK) {
         return ret;
     }
-    return _value.ParseFromString(raw_value) ? status_code::OK : status_code::INVALID;
+    proto::DataValue value;
+    if (!value.ParseFromString(raw_value)) {
+        return status_code::INVALID;
+    }
+    info = { value.type() == proto::NODE_TEMP, value.value(), value.owner() };
+    return status_code::OK;
 }
 
-int32_t TreeStructure::put(const ValueInfo& info) {
+int32_t TreeStructure::put(const std::string& ns, const std::string& key,
+        const ValueInfo& info) {
     // prepare data value
     proto::DataValue cur_node;
     cur_node.set_value(info.value);
@@ -101,17 +104,17 @@ int32_t TreeStructure::put(const ValueInfo& info) {
         return status_code::INVALID;
     }
     // put current node to database
-    int32_t ret = _underlying->put(_ns, get_structured_key(_key), raw_value);
+    int32_t ret = _underlying->put(ns, get_structured_key(key), raw_value);
     if (ret != status_code::OK) {
         return ret;
     }
     // loop to create parent node
     proto::DataValue parent_node;
-    std::string parent = _key;
+    std::string parent = key;
     while ((parent = get_parent(parent)) != "") {
         // get current node value
         std::string cur_value;
-        ret = _underlying->get(cur_value, _ns, get_structured_key(parent));
+        ret = _underlying->get(cur_value, ns, get_structured_key(parent));
         if (ret != status_code::OK && ret != status_code::NOT_FOUND) {
             // database error
             return ret;
@@ -130,25 +133,26 @@ int32_t TreeStructure::put(const ValueInfo& info) {
         if (!parent_node.SerializeToString(&raw_value)) {
             return status_code::INVALID;
         }
-        if (_underlying->put(_ns, get_structured_key(parent), raw_value)
+        if (_underlying->put(ns, get_structured_key(parent), raw_value)
                 != status_code::OK) {
             return status_code::INVALID;
         }
     }
 }
 
-int32_t TreeStructure::remove() {
-    std::unique_ptr<DataIterator> it(_underlying->iter(_ns));
-    it->seek(get_list_key(_key));
+int32_t TreeStructure::remove(const std::string& ns, const std::string& key) {
+    std::unique_ptr<DataIterator> it(_underlying->iter(ns));
+    it->seek(get_list_key(key));
     if (!it->done()) {
         return status_code::INVALID;
     }
-    return _underlying->remove(_ns, get_structured_key(_key));
+    return _underlying->remove(ns, get_structured_key(key));
 }
 
-StructureIterator* TreeStructure::list() const {
-    auto it = _underlying->iter(_ns);
-    return new TreeIterator(it->seek(get_list_key(_key)));
+StructureIterator* TreeStructure::list(const std::string& ns,
+        const std::string& key) const {
+    auto it = _underlying->iter(ns);
+    return new TreeIterator(it->seek(get_list_key(key)));
 }
 
 } // namespace storage
