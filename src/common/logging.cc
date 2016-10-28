@@ -346,8 +346,8 @@ void logv(int log_level, const char* format, va_list ap) {
     //   the second time with a much larger dynamically allocated buffer
     char buffer[500];
     for (int iter = 0; iter < 2; iter++) {
-        char* base;
-        int bufsize;
+        char* base = NULL;
+        int bufsize = 0;
         if (iter == 0) {
             bufsize = sizeof(buffer);
             base = buffer;

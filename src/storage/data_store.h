@@ -44,7 +44,7 @@ class DataStoreFactory {
 public:
     static DataStore* get();
 private:
-    static std::unique_ptr<DataStore> _store;
+    static std::unique_ptr<DataStore> _s_store;
 };
 
 } // namespace storage

@@ -108,8 +108,8 @@ private:
 };
 
 DataStore* DataStoreFactory::get() {
-    if (_store != nullptr) {
-        return _store.get();
+    if (_s_store != nullptr) {
+        return _s_store.get();
     }
     // TODO use proper dir path
     std::string full_name = "";//data_dir_ + "/" + name + "@db";
@@ -129,8 +129,8 @@ DataStore* DataStoreFactory::get() {
         // TODO maybe abort here?
         return nullptr;
     }
-    _store = new DataStoreImpl(current_db);
-    return _store.get();
+    _s_store = new DataStoreImpl(current_db);
+    return _s_store.get();
 }
 
 } // namespace storage
