@@ -18,20 +18,23 @@ static std::condition_variable s_cv;
 /// global buffer for test function to push id
 static std::vector<int> s_no_list;
 
+volatile bool s_start = false;
+
 /// test function for thread pool
 void thread_test_func(int no) {
     // acquire global lock first
     std::unique_lock<std::mutex> locker(s_mutex);
+	s_start = true;
     // wait for a certain time
     // consider it failed if wait timeout
-    if (s_cv.wait_for(locker, std::chrono::seconds(2)) == std::cv_status::timeout) {
+    if (s_cv.wait_for(locker, std::chrono::seconds(10)) == std::cv_status::timeout) {
         return;
     }
     // snap for a little
-    std::this_thread::sleep_for(std::chrono:milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     s_no_list.push_back(no);
     // notify next test function
-    s_cv.notify_one():
+    s_cv.notify_one();
 }
 
 } // namespace testcase
@@ -44,6 +47,8 @@ TEST(ThreadPoolTest, NormalTest) {
     for (int i = 0; i < thread_num; ++i) {
         tp.add_task(std::bind(&orion::testcase::thread_test_func, i));
     }
+	orion::testcase::s_start = false;
+	while (!orion::testcase::s_start);
     // notify the very first test function
     orion::testcase::s_cv.notify_one();
     // wait until all done
@@ -64,13 +69,15 @@ TEST(ThreadPoolTest, DelayTest) {
         EXPECT_NE(tp.delay_task(500,
                 std::bind(&orion::testcase::thread_test_func, i)), 0);
     }
-    // notify the very first test function
-    orion::testcase::s_cv.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds(450));
     // right now no delayed tasks have been scheduled
     EXPECT_EQ(orion::testcase::s_no_list.size(), 0);
+	orion::testcase::s_start = false;
+	while (!orion::testcase::s_start);
+    // notify the very first test function
+    orion::testcase::s_cv.notify_one();
     // wait long enough so that test function would be finished
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     tp.stop(true);
     ASSERT_EQ(orion::testcase::s_no_list.size(), thread_num);
     std::sort(orion::testcase::s_no_list.begin(),
@@ -91,7 +98,7 @@ TEST(ThreadPoolTest, CancelTask) {
     EXPECT_TRUE(tp.cancel_task(tid, true, &running));
     EXPECT_FALSE(running);
     std::this_thread::sleep_for(std::chrono::milliseconds(550));
-    EXPECT_EQ(orion::testcase::s_no_list, 0);
+    EXPECT_EQ(orion::testcase::s_no_list.size(), 0);
 }
 
 int main(int argc, char** argv) {
