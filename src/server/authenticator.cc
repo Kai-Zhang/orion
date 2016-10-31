@@ -6,11 +6,14 @@
 
 #include "authenticator.h"
 
+#include <memory>
 #include "storage/tree_struct.h"
 #include "common/const.h"
 
 namespace orion {
 namespace server {
+
+const std::string Authenticator::user_prefix("/user/");
 
 int32_t Authenticator::add(const std::string& user, const std::string& token) {
     if (!validate(user)) {
@@ -19,8 +22,9 @@ int32_t Authenticator::add(const std::string& user, const std::string& token) {
     if (_users.find(user) != _users.end()) {
         return status_code::EXISTED;
     }
-    ValueInfo value = { false, token, "" };
-    std::unique_ptr<TreeStructure> tree(new TreeStructure(_underlying));
+    storage::ValueInfo value = { false, token, "" };
+    std::unique_ptr<storage::TreeStructure> tree(
+            new storage::TreeStructure(_underlying));
     int32_t ret = tree->put(common::INTERNAL_NS, user_prefix + user, value);
     if (ret != status_code::OK) {
         return ret;
@@ -30,14 +34,15 @@ int32_t Authenticator::add(const std::string& user, const std::string& token) {
     return status_code::OK;
 }
 
-int32_t Authenticator::del(const std::string& user, const std::string& token) {
+int32_t Authenticator::del(const std::string& user) {
     std::unique_lock<std::mutex> locker(_mutex);
     auto it = _users.find(user);
-    if (it == _user.end()) {
-        return status_code::INEXIST;
+    if (it == _users.end()) {
+        return status_code::INVALID;
     }
     locker.unlock();
-    std::unique_ptr<TreeStructure> tree(new TreeStructure(_underlying));
+    std::unique_ptr<storage::TreeStructure> tree(
+            new storage::TreeStructure(_underlying));
     int32_t ret = tree->remove(common::INTERNAL_NS, user_prefix + user);
     if (ret != status_code::OK) {
         return ret;

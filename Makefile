@@ -10,17 +10,24 @@ include depends.mk
 # compile flags
 OPT ?= -O2 -g2
 CXX = g++
-INCPATH = -I./src
+INCPATH = -I./src -I./thirdparty/leveldb/include \
+		  -I$(PROTOBUF_DIR)/include -I$(SOFA_PBRPC_DIR)/include \
+		  -I$(GFLAGS_DIR)/include -I$(GTEST_DIR)/include
 CXXFLAGS += $(OPT) -pipe -MMD -W -Wall -fPIC --std=c++11
-LDFLAGS += -lpthread -lrt
+LDFLAGS += -lpthread -lrt -L./thirdparty/leveldb -lleveldb \
+		   -L$(PROTOBUF_DIR)/lib -lprotobuf \
+		   -L$(SOFA_PBRPC_DIR)/lib -lsofa-pbrpc \
+		   -L$(GFLAGS_DIR)/lib -lgflags
 PROTOC = $(PROTOBUF_DIR)/bin/protoc
 
 # source file definitions
 PROTO_FILE = $(wildcard src/proto/*.proto)
 PROTO_SRC = $(patsubst %.proto, %.pb.cc, $(PROTO_FILE))
+PROTO_HEADER = $(patsubst %.proto, %.pb.h, $(PROTO_FILE))
 PROTO_OBJ = $(patsubst %.cc, %.o, $(PROTO_SRC))
 
-ORION_SRC = $(wildcard src/storage/*.cc) $(wildcard src/server/*.cc)
+ORION_SRC = $(wildcard src/storage/*.cc) $(wildcard src/server/*.cc) \
+			$(wildcard src/common/*.cc) $(PROTO_SRC)
 ORION_OBJ = $(patsubst %.cc, %.o, $(ORION_SRC))
 
 OBJS = $(PROTO_OBJ) $(ORION_OBJ)
@@ -42,10 +49,11 @@ $(OBJS): $(PROTO_HEADER) $(PROTO_SRC)
 	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
 
 orion: $(ORION_OBJ)
-	$(CXX) $< -o $@ $(LDFLAGS)
+	$(CXX) $(ORION_OBJ) -o $@ $(LDFLAGS)
 
 # phony
 .PHONY: clean
 clean:
 	@rm -rf $(BIN) $(OBJS) $(DEPS)
+	@rm -rf $(PROTO_SRC) $(PROTO_HEADER)
 

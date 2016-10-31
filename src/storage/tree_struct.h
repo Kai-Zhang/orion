@@ -7,7 +7,6 @@
 #ifndef ORION_STORAGE_TREE_STRUCT_H
 #define ORION_STORAGE_TREE_STRUCT_H
 #include "storage/structure.h"
-#include "proto/serialize.pb.h"
 #include <vector>
 #include <algorithm>
 #include <chrono>

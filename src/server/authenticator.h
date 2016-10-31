@@ -11,25 +11,30 @@
 #include <mutex>
 
 namespace orion {
-namespace server {
 
+namespace storage {
 class DataStore;
+} // namespace storage
+
+namespace server {
 
 class Authenticator {
 public:
-    Authenticator(DataStore* store) : _underlying(store) { }
+    Authenticator(storage::DataStore* store) : _underlying(store) { }
     ~Authenticator() { }
     Authenticator(const Authenticator&) = delete;
     void operator=(const Authenticator&) = delete;
 
     int32_t add(const std::string& user, const std::string& token);
-    int32_t del(const std::string& user, const std::string& token);
+    int32_t del(const std::string& user);
     int32_t auth(const std::string& user, const std::string& token);
 private:
     bool validate(const std::string& user) const;
     bool use_backdoor(const std::string& user) const;
 private:
-    DataStore* _underlying;
+    static const std::string user_prefix;
+
+    storage::DataStore* _underlying;
     std::mutex _mutex;
     std::map<std::string, std::string> _users;
 };

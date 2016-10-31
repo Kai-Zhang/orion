@@ -7,6 +7,7 @@
 #include "tree_struct.h"
 
 #include <memory>
+#include "proto/serialize.pb.h"
 #include "storage/data_store.h"
 #include "common/const.h"
 
@@ -66,8 +67,6 @@ private:
         return true;
     }
 private:
-    static const std::string user_prefix("/user/");
-
     std::unique_ptr<DataIterator> _it;
     std::string _key;
     ValueInfo _value;
@@ -138,6 +137,7 @@ int32_t TreeStructure::put(const std::string& ns, const std::string& key,
             return status_code::INVALID;
         }
     }
+    return status_code::OK;
 }
 
 int32_t TreeStructure::remove(const std::string& ns, const std::string& key) {

@@ -14,6 +14,8 @@
 namespace orion {
 namespace storage {
 
+std::unique_ptr<DataStore> DataStoreFactory::_s_store(nullptr);
+
 class DataIteratorImpl : public DataIterator {
 public:
     DataIteratorImpl(leveldb::Iterator* it, const std::string& ns) :
@@ -26,7 +28,7 @@ public:
     }
 
     virtual std::string key() const {
-        return _it != NULL ? remove_ns(it->key().ToString()) : "";
+        return _it != NULL ? remove_ns(_it->key().ToString()) : "";
     }
 
     virtual std::string value() const {
@@ -129,7 +131,7 @@ DataStore* DataStoreFactory::get() {
         // TODO maybe abort here?
         return nullptr;
     }
-    _s_store = new DataStoreImpl(current_db);
+    _s_store.reset(new DataStoreImpl(current_db));
     return _s_store.get();
 }
 

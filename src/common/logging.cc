@@ -17,10 +17,12 @@
 #include <dirent.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <string.h>
 #include <string>
 #include <set>
 #include <queue>
 #include <utility>
+#include <algorithm>
 #include <functional>
 #include <mutex>
 #include <thread>

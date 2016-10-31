@@ -1,7 +1,7 @@
 package orion.proto;
 
 enum NodeType {
-    NODE_PREMANENT = 0;
+    NODE_PERMANENT = 0;
     NODE_TEMP = 1;
 }
 
