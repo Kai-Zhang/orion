@@ -135,7 +135,7 @@ function download_cmake() {
         "https://github.com/Kitware/CMake/archive/v3.2.1.tar.gz"
     tar zxf CMake-3.2.1.tar.gz
     cd CMake-3.2.1
-    ./configure --prefix=${DEPS_PREFIX}
+    ./configure --prefix=${DEPS_OUTPUT}
     make -j 4
     make install
     cd -
@@ -143,17 +143,17 @@ function download_cmake() {
 
 function download_gflags() {
     if [[ -f "${FLAG_DIR}/gflags_2_1_1" ]] && \
-       [[ -f "${DEPS_PREFIX}/lib/libgflags.a" ]] && \
-       [[ -d "${DEPS_PREFIX}/include/gflags" ]]; then
+       [[ -f "${DEPS_OUTPUT}/lib/libgflags.a" ]] && \
+       [[ -d "${DEPS_OUTPUT}/include/gflags" ]]; then
         return 0
     fi
     download_cmake
-    cd ${DEPS_OUTPUT}
+    cd ${DEPS_SOURCE}
     wget -O gflags-2.1.1.tar.gz --no-check-certificate \
         "https://github.com/schuhschuh/gflags/archive/v2.1.1.tar.gz"
     tar zxf gflags-2.1.1.tar.gz
     cd gflags-2.1.1
-    cmake -DCMAKE_INSTALL_PREFIX=${DEPS_PREFIX} -DGFLAGS_NAMESPACE=google -DCMAKE_CXX_FLAGS=-fPIC
+    cmake -DCMAKE_INSTALL_PREFIX=${DEPS_OUTPUT} -DGFLAGS_NAMESPACE=google -DCMAKE_CXX_FLAGS=-fPIC
     make -j 4
     make install
     cd -
@@ -162,8 +162,8 @@ function download_gflags() {
 
 function download_gtest() {
     if [[ -f "${FLAG_DIR}/gtest_1_7_0" ]] && \
-       [[ -f "${DEPS_PREFIX}/lib/libgtest.a" ]] && \
-       [[ -d "${DEPS_PREFIX}/include/gtest" ]]; then
+       [[ -f "${DEPS_OUTPUT}/lib/libgtest.a" ]] && \
+       [[ -d "${DEPS_OUTPUT}/include/gtest" ]]; then
         return 0
     fi
     cd ${DEPS_SOURCE}
@@ -175,8 +175,8 @@ function download_gtest() {
     sed -i "s/-Wno-missing-field-initializers//g" cmake/internal_utils.cmake
     cmake .
     make
-    cp -af lib*.a ${DEPS_PREFIX}/lib
-    cp -af include/gtest ${DEPS_PREFIX}/include
+    cp -af lib*.a ${DEPS_OUTPUT}/lib
+    cp -af include/gtest ${DEPS_OUTPUT}/include
     cd -
     touch "${FLAG_DIR}/gtest_1_7_0"
 }
