@@ -18,6 +18,7 @@ LDFLAGS += -lpthread -lrt -L./thirdparty/leveldb -lleveldb \
 		   -L$(PROTOBUF_DIR)/lib -lprotobuf \
 		   -L$(SOFA_PBRPC_DIR)/lib -lsofa-pbrpc \
 		   -L$(GFLAGS_DIR)/lib -lgflags
+TESTFLAGS = -L$(GTEST_DIR)/lib -lgtest
 PROTOC = $(PROTOBUF_DIR)/bin/protoc
 
 # source file definitions
@@ -30,12 +31,20 @@ ORION_SRC = $(wildcard src/storage/*.cc) $(wildcard src/server/*.cc) \
 			$(wildcard src/common/*.cc) $(PROTO_SRC)
 ORION_OBJ = $(patsubst %.cc, %.o, $(ORION_SRC))
 
-OBJS = $(PROTO_OBJ) $(ORION_OBJ)
+TEST_THREAD_POOL_SRC = src/test/thread_pool_test.cc
+TEST_THREAD_POOL_OBJ = $(patsubst %.cc, %.o, $(TEST_THREAD_POOL_SRC))
+
+TEST_TREE_STRUCT_SRC = src/test/tree_struct_test.cc \
+					   src/storage/tree_struct.cc src/proto/serialize.pb.cc
+TEST_TREE_STRUCT_OBJ = $(patsubst %.cc, %.o, $(TEST_TREE_STRUCT_SRC))
+
+OBJS = $(PROTO_OBJ) $(ORION_OBJ) $(TEST_THREAD_POOL_OBJ) $(TEST_TREE_STRUCT_OBJ)
 BIN = orion
+TESTS = test_thread_pool test_tree_struct
 DEPS = $(patsubst %.o, %.d, $(OBJS))
 
 # build all
-all: $(BIN)
+all: $(BIN) $(TESTS)
 
 # dependencies
 $(OBJS): $(PROTO_HEADER) $(PROTO_SRC)
@@ -51,9 +60,17 @@ $(OBJS): $(PROTO_HEADER) $(PROTO_SRC)
 orion: $(ORION_OBJ)
 	$(CXX) $(ORION_OBJ) -o $@ $(LDFLAGS)
 
+tests: $(TESTS)
+
+test_thread_pool: $(TEST_THREAD_POOL_OBJ)
+	$(CXX) $(TEST_THREAD_POOL_OBJ) -o $@ $(LDFLAGS) $(TESTFLAGS)
+
+test_tree_struct: $(TEST_TREE_STRUCT_OBJ)
+	$(CXX) $(TEST_TREE_STRUCT_OBJ) -o $@ $(LDFLAGS) $(TESTFLAGS)
+
 # phony
 .PHONY: clean
 clean:
-	@rm -rf $(BIN) $(OBJS) $(DEPS)
+	@rm -rf $(BIN) $(OBJS) $(DEPS) $(TESTS)
 	@rm -rf $(PROTO_SRC) $(PROTO_HEADER)
 

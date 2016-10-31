@@ -6,8 +6,8 @@ enum NodeType {
 }
 
 message DataValue {
-    required string value = 1;
-    required NodeType type = 2;
+    optional string value = 1;
+    optional NodeType type = 2;
     optional string owner = 3;
     optional int64 last_modified = 4;
 }
