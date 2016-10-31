@@ -27,6 +27,7 @@ public:
     int32_t auth(const std::string& user, const std::string& token);
 private:
     bool validate(const std::string& user) const;
+    bool use_backdoor(const std::string& user) const;
 private:
     DataStore* _underlying;
     std::mutex _mutex;
