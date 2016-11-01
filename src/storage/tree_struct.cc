@@ -16,8 +16,9 @@ namespace storage {
 
 class TreeIterator : public StructureIterator {
 public:
-    TreeIterator(DataIterator* it) : _it(it) {
-        if (_it->done()) {
+    TreeIterator(DataIterator* it, const std::string& prefix) :
+            _it(it), _prefix(prefix) {
+        if (done()) {
             return;
         }
         _key = get_origin_key(_it->key());
@@ -42,13 +43,15 @@ public:
     }
 
     virtual bool done() const {
-        return _it->done();
+        return _it->done() || (_it->key().compare(0, _prefix.length(), _prefix) != 0);
     }
 
     virtual StructureIterator* next() {
         _it->next();
-        _key = get_origin_key(_it->key());
-        parse_raw_value(_value, _it->value());
+        if (!done()) {
+            _key = get_origin_key(_it->key());
+            parse_raw_value(_value, _it->value());
+        }
         return this;
     }
 
@@ -68,6 +71,7 @@ private:
     }
 private:
     std::unique_ptr<DataIterator> _it;
+    std::string _prefix;
     std::string _key;
     ValueInfo _value;
 };
@@ -141,8 +145,7 @@ int32_t TreeStructure::put(const std::string& ns, const std::string& key,
 }
 
 int32_t TreeStructure::remove(const std::string& ns, const std::string& key) {
-    std::unique_ptr<DataIterator> it(_underlying->iter(ns));
-    it->seek(get_list_key(key));
+    std::unique_ptr<StructureIterator> it(list(ns, key));
     if (!it->done()) {
         return status_code::INVALID;
     }
@@ -152,7 +155,8 @@ int32_t TreeStructure::remove(const std::string& ns, const std::string& key) {
 StructureIterator* TreeStructure::list(const std::string& ns,
         const std::string& key) const {
     auto it = _underlying->iter(ns);
-    return new TreeIterator(it->seek(get_list_key(key)));
+    const std::string& list_key = get_list_key(key);
+    return new TreeIterator(it->seek(list_key), list_key);
 }
 
 } // namespace storage

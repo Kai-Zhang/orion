@@ -40,7 +40,12 @@ private:
 
     std::string get_list_key(const std::string& key) const {
         // add one more trailing / to increase level number
-        return get_structured_key(key.back() == '/' ? key + "/" : key + "//");
+        std::string prefix = key;
+        if (prefix.back() != '/') {
+            prefix.push_back('/');
+        }
+        int level = std::count(prefix.cbegin(), prefix.cend(), '/');
+        return std::to_string(level) + '#' + prefix;
     }
 
     std::string get_parent(const std::string& key) const {
