@@ -6,7 +6,6 @@
 
 #include "authenticator.h"
 
-#include <memory>
 #include "storage/tree_struct.h"
 #include "common/const.h"
 
@@ -14,6 +13,9 @@ namespace orion {
 namespace server {
 
 const std::string Authenticator::s_user_prefix("/user/");
+
+Authenticator::Authenticator(storage::DataStore* store) :
+        _underlying(new storage::TreeStructure(store)) { }
 
 int32_t Authenticator::add(const std::string& user, const std::string& token) {
     if (!validate(user)) {
@@ -25,9 +27,7 @@ int32_t Authenticator::add(const std::string& user, const std::string& token) {
         return status_code::EXISTED;
     }
     storage::ValueInfo value = { false, false, token, "" };
-    std::unique_ptr<storage::TreeStructure> tree(
-            new storage::TreeStructure(_underlying));
-    int32_t ret = tree->put(common::INTERNAL_NS, s_user_prefix + user, value);
+    int32_t ret = _underlying->put(common::INTERNAL_NS, s_user_prefix + user, value);
     if (ret != status_code::OK) {
         return ret;
     }
@@ -44,9 +44,7 @@ int32_t Authenticator::del(const std::string& user) {
         return status_code::INVALID;
     }
     locker.unlock();
-    std::unique_ptr<storage::TreeStructure> tree(
-            new storage::TreeStructure(_underlying));
-    int32_t ret = tree->remove(common::INTERNAL_NS, s_user_prefix + user);
+    int32_t ret = _underlying->remove(common::INTERNAL_NS, s_user_prefix + user);
     if (ret != status_code::OK) {
         return ret;
     }
@@ -62,7 +60,18 @@ int32_t Authenticator::auth(const std::string& user, const std::string& token) {
     }
     std::lock_guard<std::mutex> locker(_mutex);
     auto it = _users.find(user);
-    return it != _users.end() && it->second == token;
+    return it != _users.cend() && it->second == token;
+}
+
+std::vector<std::string> Authenticator::list() {
+    std::lock_guard<std::mutex> locker(_mutex);
+    std::unique_ptr<storage::StructureIterator> it(
+            _underlying->list(common::INTERNAL_NS, s_user_prefix));
+    std::vector<std::string> result;
+    for (; !it->done(); it->next()) {
+        result.push_back(it->key());
+    }
+    return result;
 }
 
 bool Authenticator::validate(const std::string& user) const {

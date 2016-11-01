@@ -8,13 +8,17 @@
 #define ORION_SERVER_AUTHENTICATOR_H
 #include <string>
 #include <map>
+#include <vector>
+#include <memory>
 #include <mutex>
 
 namespace orion {
 
 namespace storage {
 
-class DataStore; // forward declaration
+// forward declarations
+class DataStore;
+class TreeStructure;
 
 } // namespace storage
 
@@ -24,7 +28,7 @@ namespace server {
 class Authenticator {
 public:
     /// Authenticator needs an underlying storage to save user information
-    Authenticator(storage::DataStore* store) : _underlying(store) { }
+    Authenticator(storage::DataStore* store);
     ~Authenticator() { }
     /// disable copy and move for authenticator
     Authenticator(const Authenticator&) = delete;
@@ -32,7 +36,10 @@ public:
 
     int32_t add(const std::string& user, const std::string& token);
     int32_t del(const std::string& user);
+    /// check if the token of user is match
     int32_t auth(const std::string& user, const std::string& token);
+    /// list all existing username
+    std::vector<std::string> list();
 private:
     // check if a username is valid
     // a valid username should not be conflict with internal user and
@@ -46,7 +53,7 @@ private:
     // which is easy to list
     static const std::string s_user_prefix;
 
-    storage::DataStore* _underlying;
+    std::unique_ptr<storage::TreeStructure> _underlying;
     std::mutex _mutex;
     // in-memory cache to speed up user auth
     std::map<std::string, std::string> _users;
