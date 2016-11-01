@@ -7,6 +7,7 @@
 #ifndef ORION_STORAGE_STRUCTURE_H
 #define ORION_STORAGE_STRUCTURE_H
 #include <string>
+#include <chrono>
 
 namespace orion {
 namespace storage {
@@ -57,6 +58,12 @@ public:
             const std::string& key) const = 0;
 
     virtual ~BasicStructure() { }
+protected:
+    /// timestamp used to check modification
+    int64_t timestamp() const {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::system_clock::now().time_since_epoch()).count();
+    }
 };
 
 } // namespace storage

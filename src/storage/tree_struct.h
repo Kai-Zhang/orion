@@ -9,7 +9,6 @@
 #include "storage/structure.h"
 #include <vector>
 #include <algorithm>
-#include <chrono>
 
 namespace orion {
 namespace storage {
@@ -70,12 +69,6 @@ private:
         // ignore the possible trailing /
         size_t last_sep = key.find_last_of('/', key.length() - 2);
         return last_sep != std::string::npos ? key.substr(0, last_sep) : "";
-    }
-
-    /// timestamp used to check modification
-    int64_t timestamp() const {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::system_clock::now().time_since_epoch()).count();
     }
 private:
     DataStore* _underlying;
