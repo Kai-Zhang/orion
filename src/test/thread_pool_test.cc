@@ -24,7 +24,7 @@ volatile bool s_start = false;
 void thread_test_func(int no) {
     // acquire global lock first
     std::unique_lock<std::mutex> locker(s_mutex);
-	s_start = true;
+    s_start = true;
     // wait for a certain time
     // consider it failed if wait timeout
     if (s_cv.wait_for(locker, std::chrono::seconds(10)) == std::cv_status::timeout) {
@@ -47,8 +47,10 @@ TEST(ThreadPoolTest, NormalTest) {
     for (int i = 0; i < thread_num; ++i) {
         tp.add_task(std::bind(&orion::testcase::thread_test_func, i));
     }
-	orion::testcase::s_start = false;
-	while (!orion::testcase::s_start);
+    orion::testcase::s_start = false;
+    while (!orion::testcase::s_start) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     // notify the very first test function
     orion::testcase::s_cv.notify_one();
     // wait until all done
@@ -72,8 +74,10 @@ TEST(ThreadPoolTest, DelayTest) {
     std::this_thread::sleep_for(std::chrono::milliseconds(450));
     // right now no delayed tasks have been scheduled
     EXPECT_EQ(orion::testcase::s_no_list.size(), 0);
-	orion::testcase::s_start = false;
-	while (!orion::testcase::s_start);
+    orion::testcase::s_start = false;
+    while (!orion::testcase::s_start) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     // notify the very first test function
     orion::testcase::s_cv.notify_one();
     // wait long enough so that test function would be finished

@@ -11,12 +11,20 @@
 namespace orion {
 namespace storage {
 
+/// value struct to describe a node in structure
 struct ValueInfo {
+    // true if the node is temporary
     bool temp;
+    // true if the node is not create by user
+    // will be ignored when putting
+    bool intermediate;
+    // user defined value, empty if it is the intermediate node
     std::string value;
+    // session id of the node, empty if the node is not temporary
     std::string owner;
 };
 
+/// iterator over structured data
 class StructureIterator {
 public:
     virtual bool temp() const = 0;
@@ -29,6 +37,8 @@ public:
     virtual ~StructureIterator() { }
 };
 
+/// interface of structure storage
+/// using underlying data storage to provide structured data i/o
 class BasicStructure {
 public:
     virtual int32_t get(ValueInfo& info, const std::string& ns,
@@ -36,6 +46,13 @@ public:
     virtual int32_t put(const std::string& ns, const std::string& key,
             const ValueInfo& info) = 0;
     virtual int32_t remove(const std::string& ns, const std::string& key) = 0;
+    /**
+     * @brief Returns a iterator using the given key,
+     *        the function has different definition in different implements
+     * @param ns   [IN] namespace of the data
+     * @param key  [IN] key for the iterator to start
+     * @return     a StructureIterator pointer over a list of data
+     */
     virtual StructureIterator* list(const std::string& ns,
             const std::string& key) const = 0;
 

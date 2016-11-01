@@ -14,40 +14,42 @@
 namespace orion {
 namespace storage {
 
+// initialize singleton pointer to null
 std::unique_ptr<DataStore> DataStoreFactory::_s_store(nullptr);
 
+/// DataIteratorImpl is a wrapper for iterator of leveldb
 class DataIteratorImpl : public DataIterator {
 public:
     DataIteratorImpl(leveldb::Iterator* it, const std::string& ns) :
             _it(it), _ns(ns) { }
     virtual ~DataIteratorImpl() {
-        if (_it != NULL) {
+        if (_it != nullptr) {
             delete _it;
-            _it = NULL;
+            _it = nullptr;
         }
     }
 
     virtual std::string key() const {
-        return _it != NULL ? remove_ns(_it->key().ToString()) : "";
+        return _it != nullptr ? remove_ns(_it->key().ToString()) : "";
     }
 
     virtual std::string value() const {
-        return _it != NULL ? _it->value().ToString() : "";
+        return _it != nullptr ? _it->value().ToString() : "";
     }
 
     virtual bool done() const {
-        return _it != NULL ? !_it->Valid() : false;
+        return _it != nullptr ? !_it->Valid() : false;
     }
 
     virtual DataIterator* seek(const std::string& key) {
-        if (_it != NULL) {
+        if (_it != nullptr) {
             _it->Seek(get_key_in_ns(_ns, key));
         }
         return this;
     }
 
     virtual DataIterator* next() {
-        if (_it != NULL) {
+        if (_it != nullptr) {
             _it->Next();
         }
         return this;
@@ -71,6 +73,7 @@ private:
     std::string _ns;
 };
 
+/// DataStoreImpl is a wrapper for leveldb pointer
 class DataStoreImpl : public DataStore {
 public:
     DataStoreImpl(leveldb::DB* db) : _db(db) { }
@@ -125,7 +128,7 @@ DataStore* DataStoreFactory::get() {
     LOG(INFO, "[data]: block_size: %d, writer_buffer_size: %d", 
         options.block_size,
         options.write_buffer_size);
-    leveldb::DB* current_db = NULL;
+    leveldb::DB* current_db = nullptr;
     leveldb::Status st = leveldb::DB::Open(options, full_name, &current_db);
     if (!st.ok() || current_db == nullptr) {
         // TODO maybe abort here?

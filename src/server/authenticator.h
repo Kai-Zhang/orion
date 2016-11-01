@@ -13,15 +13,20 @@
 namespace orion {
 
 namespace storage {
-class DataStore;
+
+class DataStore; // forward declaration
+
 } // namespace storage
 
 namespace server {
 
+/// provides user auth
 class Authenticator {
 public:
+    /// Authenticator needs an underlying storage to save user information
     Authenticator(storage::DataStore* store) : _underlying(store) { }
     ~Authenticator() { }
+    /// disable copy and move for authenticator
     Authenticator(const Authenticator&) = delete;
     void operator=(const Authenticator&) = delete;
 
@@ -29,13 +34,21 @@ public:
     int32_t del(const std::string& user);
     int32_t auth(const std::string& user, const std::string& token);
 private:
+    // check if a username is valid
+    // a valid username should not be conflict with internal user and
+    // contain no '/', better composed by letters, numbers and '_'
     bool validate(const std::string& user) const;
+    // backdoor here is for internal user to access data in all namespace
+    // this is used for OP management or web monitor
     bool use_backdoor(const std::string& user) const;
 private:
-    static const std::string user_prefix;
+    // user information stores under the same directory
+    // which is easy to list
+    static const std::string s_user_prefix;
 
     storage::DataStore* _underlying;
     std::mutex _mutex;
+    // in-memory cache to speed up user auth
     std::map<std::string, std::string> _users;
 };
 

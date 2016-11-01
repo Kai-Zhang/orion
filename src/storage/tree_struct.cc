@@ -14,6 +14,7 @@
 namespace orion {
 namespace storage {
 
+/// iterator on the tree structure
 class TreeIterator : public StructureIterator {
 public:
     TreeIterator(DataIterator* it, const std::string& prefix) :
@@ -56,21 +57,25 @@ public:
     }
 
 private:
+    /// returns the original key of a structured key in underlying storage
     std::string get_origin_key(const std::string& structured) const {
         size_t sep = structured.find_first_of('#');
         return sep != std::string::npos ? structured.substr(sep + 1) : structured;
     }
 
+    /// parse serialized value structure
     bool parse_raw_value(ValueInfo& info, const std::string& raw) const {
         proto::DataValue data;
         if (!data.ParseFromString(raw)) {
             return false;
         }
-        info = { data.type() == proto::NODE_TEMP, data.value(), data.owner() };
+        info = { data.type() == proto::NODE_TEMP, data.has_value(),
+                 data.value(), data.owner() };
         return true;
     }
 private:
     std::unique_ptr<DataIterator> _it;
+    // record parent directory and abort scanning accordingly
     std::string _prefix;
     std::string _key;
     ValueInfo _value;
@@ -87,7 +92,8 @@ int32_t TreeStructure::get(ValueInfo& info, const std::string& ns,
     if (!value.ParseFromString(raw_value)) {
         return status_code::INVALID;
     }
-    info = { value.type() == proto::NODE_TEMP, value.value(), value.owner() };
+    info = { value.type() == proto::NODE_TEMP, value.has_value(),
+             value.value(), value.owner() };
     return status_code::OK;
 }
 
