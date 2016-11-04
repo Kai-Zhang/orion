@@ -65,11 +65,11 @@ private:
 
     /// parse serialized value structure
     bool parse_raw_value(ValueInfo& info, const std::string& raw) const {
-        proto::DataValue data;
+        serialize::DataValue data;
         if (!data.ParseFromString(raw)) {
             return false;
         }
-        info = { data.type() == proto::NODE_TEMP, data.has_value(),
+        info = { data.type() == serialize::NODE_TEMP, data.has_value(),
                  data.value(), data.owner() };
         return true;
     }
@@ -88,11 +88,11 @@ int32_t TreeStructure::get(ValueInfo& info, const std::string& ns,
     if (ret != status_code::OK) {
         return ret;
     }
-    proto::DataValue value;
+    serialize::DataValue value;
     if (!value.ParseFromString(raw_value)) {
         return status_code::INVALID;
     }
-    info = { value.type() == proto::NODE_TEMP, value.has_value(),
+    info = { value.type() == serialize::NODE_TEMP, value.has_value(),
              value.value(), value.owner() };
     return status_code::OK;
 }
@@ -100,9 +100,9 @@ int32_t TreeStructure::get(ValueInfo& info, const std::string& ns,
 int32_t TreeStructure::put(const std::string& ns, const std::string& key,
         const ValueInfo& info) {
     // prepare data value
-    proto::DataValue cur_node;
+    serialize::DataValue cur_node;
     cur_node.set_value(info.value);
-    cur_node.set_type(info.temp ? proto::NODE_TEMP : proto::NODE_PERMANENT);
+    cur_node.set_type(info.temp ? serialize::NODE_TEMP : serialize::NODE_PERMANENT);
     if (info.temp) {
         cur_node.set_owner(info.owner);
     }
@@ -118,7 +118,7 @@ int32_t TreeStructure::put(const std::string& ns, const std::string& key,
         return ret;
     }
     // loop to create parent node
-    proto::DataValue parent_node;
+    serialize::DataValue parent_node;
     std::string parent = key;
     while ((parent = get_parent(parent)) != "") {
         // get current node value

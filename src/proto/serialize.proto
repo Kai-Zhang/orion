@@ -1,4 +1,4 @@
-package orion.proto;
+package orion.serialize;
 
 enum NodeType {
     NODE_PERMANENT = 0;

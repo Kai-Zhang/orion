@@ -1,0 +1,43 @@
+package orion.raft;
+
+message User {
+    required string user = 1;
+    required string token = 2;
+}
+
+message Entry {
+    required int64 term = 1;
+    required int32 op = 2;
+    required string key = 3;
+    required bytes value = 4;
+    optional User user = 5;
+}
+
+message VoteRequest {
+    required int64 term = 1;
+    required string candidate_id = 2;
+    optional int64 last_log_term = 3;
+    optional int64 last_log_index = 4;
+}
+
+message VoteResponse {
+    required int64 term = 1;
+    required bool granted = 2;
+}
+
+message AppendEntriesRequest {
+    required int64 term = 1;
+    required string leader_id = 2;
+    optional int64 prev_log_term = 3;
+    optional int64 prev_log_index = 4;
+    optional int64 commit_index = 5;
+    repeated Entry entries = 6;
+}
+
+message AppendEntriesResponse {
+    required int64 current_term = 1;
+    required bool success = 2;
+    optional int64 log_length = 3;
+    optional bool is_busy = 4 [default = false];
+}
+
