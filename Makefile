@@ -55,7 +55,7 @@ $(OBJS): $(PROTO_HEADER) $(PROTO_SRC)
 	$(PROTOC) --proto_path=./src/proto --cpp_out=./src/proto $<
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCPATH) -c -o $@ $<
 
 orion: $(ORION_OBJ)
 	$(CXX) $(ORION_OBJ) -o $@ $(LDFLAGS)
