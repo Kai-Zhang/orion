@@ -1,0 +1,8 @@
+language: cpp
+compiler: g++
+install:
+    - sh -x build.sh -a
+
+script:
+    - make -j4
+
