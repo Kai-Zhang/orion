@@ -1,7 +1,7 @@
 Orion - Raft based KV database
 ====
 
-# Under construction
-Orion is enlighted by [nexus](https://github.com/baidu/ins) and is aim to add dynamic membership mechanism and tree like data organization on it.
+## Under Construction
+Orion is aim to build a distributed storage service with high availability for cluster coordination.  
 Orion is still under construction...
 

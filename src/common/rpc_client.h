@@ -1,6 +1,9 @@
-// Copyright (c) 2016, Baidu.com, Inc. All Rights Reserved
-// Use of this source code is governed by a BSD-style license that can be
+// Copyright (c) 2017, Kai-Zhang
+// Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
+//
+// This file is originally from projects using sofa-pbrpc
+// and modified to work with C++11
 //
 // Author: yanshiguang02@baidu.com
 
